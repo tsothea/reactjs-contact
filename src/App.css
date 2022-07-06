@@ -54,4 +54,5 @@ table.table th {
 .error {
   color: red;
   padding: 10px;
+  white-space: pre;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import deleteLocalData from './components/deleteLocalData';
+import Error from './components/Error';
 import getLocalData from './components/getLocalData'
 import saveLocalData from './components/saveLocalData';
 import updateLocalData from './components/updateLocalData';
@@ -15,6 +16,7 @@ function App() {
       'phone': '',
       'email': ''
   });
+  const [errors, setErrors] = useState('');
 
   const setValue = (event) => {
     event.preventDefault();
@@ -31,35 +33,37 @@ function App() {
   const saveData = (event) => {
     event.preventDefault();
 
-    if (formData.id != '') {
-        let index = contacts.map(function(item) {
-            return item.id
-          }).indexOf(formData.id);
-          contacts[index] = formData;
+    if (validatForm() === true){
+        if (formData.id !== '') {
+            let index = contacts.map(function(item) {
+                return item.id
+            }).indexOf(formData.id);
+            contacts[index] = formData;
 
-          setContacts([...contacts]);
+            setContacts([...contacts]);
 
-          updateLocalData(contacts);
-    } else {
-        let id = 1;
-        if (contacts.length > 0) {
-            let contact = contacts[contacts.length - 1];
-            id = contact.id + 1;
+            updateLocalData(contacts);
+        } else {
+            let id = 1;
+            if (contacts.length > 0) {
+                let contact = contacts[contacts.length - 1];
+                id = contact.id + 1;
+            }
+            const newContact = {
+                id: id,
+                name: formData.name,
+                phone: formData.phone,
+                email: formData.email,
+                date: new Date().toLocaleString()
+            };
+
+            const newContacts = [...contacts, newContact];
+            setContacts(newContacts);
+
+            saveLocalData(newContact);
         }
-        const newContact = {
-            id: id,
-            name: formData.name,
-            phone: formData.phone,
-            email: formData.email,
-            date: new Date().toLocaleString()
-        };
-
-        const newContacts = [...contacts, newContact];
-        setContacts(newContacts);
-
-        saveLocalData(newContact);
+        clearForm();
     }
-    clearForm();
   }
 
   const updateData = (id) => {
@@ -93,6 +97,41 @@ function App() {
     })
   }
 
+  function validatForm() {
+    let isValid = true;
+    let errors = '';
+
+    if (formData.name === '') {
+        errors += 'Please enter your name!\n';
+        isValid = false;
+    }
+    if (formData.phone === '') {
+        errors += 'Please enter your phone number!\n';
+        isValid = false;
+    }
+    if (formData.email === '') {
+        errors += 'Please enter your email!\n';
+        isValid = false;
+    } else if (!ValidateEmail(formData.email)) {
+        errors += 'Please provide valid email address!\n';
+        isValid = false;
+    }
+
+    if (!isValid) {
+        setErrors(errors);
+    }
+
+    return isValid;
+  }
+  function ValidateEmail(email) {
+    let validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    if (email.match(validRegex)) {
+        return true;
+    }
+    
+    return false;
+  }
+
   return (
     <div className="App">
       <div className="container">
@@ -118,7 +157,7 @@ function App() {
                       <input type="button" name="btn-submit" value="Save" className="btn btn-success btn-full" id="btnsubmit_id" onClick={event => saveData(event)} />
                   </div>
               </div>
-              <div className="error" id="errors_id"></div>
+              <Error message={errors} />
           </form>
       </div>
       <br /><br />
